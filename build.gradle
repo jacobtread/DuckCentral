@@ -1,16 +1,15 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     ext {
-        compose_version = '1.0.0'
+        compose_version = '1.1.1'
     }
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath "com.android.tools.build:gradle:7.0.0"
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.10"
-
+        classpath "com.android.tools.build:gradle:7.0.4"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.10"
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
     }
@@ -18,4 +17,20 @@ buildscript {
 
 task clean(type: Delete) {
     delete rootProject.buildDir
+}
+
+
+task buildFirmware {
+    doLast {
+        def firmwareDir = "${projectDir}/firmware"
+        exec {
+            workingDir firmwareDir
+            executable 'arduino-cli'
+            args 'compile', '-b', 'wifiduck:esp8266:malduinow', 'firmware', '--build-path', 'build'
+        }
+        println 'Firmware Built'
+        def firmwareFile = file("${firmwareDir}/build/firmware.ino.bin");
+        def outFirmwareFile = file("${projectDir}/build/firmware.bin")
+        firmwareFile.renameTo(outFirmwareFile)
+    }
 }
