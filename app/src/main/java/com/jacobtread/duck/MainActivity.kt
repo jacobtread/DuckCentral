@@ -48,6 +48,7 @@ sealed class Screen(val route: String, val icon: ImageVector, val name: String) 
     object Settings : Screen("settings", Icons.Filled.Home, "Settings")
 }
 
+@Preview(showBackground = true)
 @Composable
 fun App() {
     val navController = rememberNavController()
@@ -80,10 +81,11 @@ fun App() {
             }
         }
     ) {
-        NavHost(navController, startDestination = "home") {
-            composable(Screen.Home.route) {
-
-            }
+        NavHost(navController, startDestination = Screen.Home.route) {
+            composable(Screen.Home.route) { Home(navController) }
+            composable(Screen.Files.route) { Files(navController) }
+            composable(Screen.Terminal.route) { Terminal(navController) }
+            composable(Screen.Settings.route) { Settings(navController) }
         }
     }
 }
@@ -94,14 +96,16 @@ fun Home(navController: NavHostController) {
 }
 
 @Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
+fun Files(navController: NavHostController) {
+
 }
 
-@Preview(showBackground = true)
 @Composable
-fun DefaultPreview() {
-    DuckCentralTheme {
-        Greeting("Android")
-    }
+fun Terminal(navController: NavHostController) {
+
+}
+
+@Composable
+fun Settings(navController: NavHostController) {
+
 }
