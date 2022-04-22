@@ -15,9 +15,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -53,10 +53,6 @@ sealed class Page(val route: String, val icon: ImageVector, val name: String) {
     object Settings : Page("settings", Icons.Filled.Settings, "Settings")
 }
 
-fun NavGraphBuilder.pagesGraph(navController: NavHostController) {
-
-}
-
 @Composable
 fun Loader(text: String) {
     Box(
@@ -66,9 +62,10 @@ fun Loader(text: String) {
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
         ) {
             CircularProgressIndicator()
+            Spacer(Modifier.width(4.dp))
             Text(text)
         }
     }
@@ -78,16 +75,17 @@ fun Loader(text: String) {
 @Composable
 fun App() {
     val navController = rememberNavController()
-    var connected by remember { mutableStateOf(false) }
+    var hasConnection by remember { mutableStateOf(false) }
     var state by remember { mutableStateOf("Connecting") }
     CoroutineScope(Dispatchers.IO).launch {
         try {
             DuckController.connect()
+            hasConnection = true
+            state = "Connected"
             DuckController.push(SettingsMessage()) {
+                println("Recieved settings")
                 println(it)
             }
-            connected = true
-            state = "Connected"
         } catch (e: ConnectTimeoutException) {
             e.printStackTrace()
         } catch (e: IOException) {
@@ -96,9 +94,8 @@ fun App() {
     }
     DuckController.stateConsumer = ResponseConsumer {
         state = it
-        println("State change: $it")
     }
-    if (connected) {
+    if (hasConnection) {
         val items = listOf(
             Page.Home,
             Page.Files,

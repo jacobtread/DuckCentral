@@ -5,6 +5,10 @@ import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.http.*
 import io.ktor.websocket.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.launch
+import java.util.concurrent.Executors
 
 fun interface ResponseConsumer<R> {
     fun consume(value: R)
@@ -19,6 +23,9 @@ typealias MessageQueue = ArrayDeque<QueueItem<*>>
 data class QueueItem<R>(val message: Message<R>, val handler: ResponseConsumer<R>)
 
 object DuckController {
+
+    private val executor = Executors.newSingleThreadExecutor();
+    private val Pool = executor.asCoroutineDispatcher()
 
     // The default web socket server host
     private const val HOST_ADDR = "192.168.4.1"
@@ -50,6 +57,7 @@ object DuckController {
      */
     fun <R> push(message: Message<R>, handler: ResponseConsumer<R>) {
         synchronized(queue) {
+            println("PUSHING NEW MESSAGE $message")
             queue.addLast(QueueItem(message, handler))
         }
     }
@@ -75,7 +83,10 @@ object DuckController {
             install(WebSockets)
         }
         client.webSocket(method = HttpMethod.Get, path = "/ws", host = host, port = port) {
-            run(this)
+            val session = this;
+            CoroutineScope(Pool).launch {
+                run(session)
+            }
         }
     }
 
