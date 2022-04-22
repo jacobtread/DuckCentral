@@ -2,53 +2,130 @@ package com.jacobtread.duck.api
 
 import io.ktor.websocket.*
 
+/**
+ * Message Represents a message that can be sent to the
+ * WebSocket server that will also read a response from
+ * the socket server
+ *
+ * @param R The type of response that will be created
+ * @constructor Create empty Message
+ */
 interface Message<R> {
 
+    /**
+     * send Implementations will send the command to the
+     * server as plain text packets
+     *
+     * @param session The session to send the packet to
+     */
     suspend fun send(session: WebSocketSession);
 
+    /**
+     * receive
+     *
+     * @param session
+     * @return
+     */
     suspend fun receive(session: WebSocketSession): R
-
 }
 
+/**
+ * SMessage a simple message that will only send a single
+ * message text and will always receive a plain
+ * text response that doesn't need to be formatted in
+ * any special way
+ *
+ * @constructor Create empty SMessage
+ */
+open class SimpleMessage(private val message: String) : Message<String> {
+    override suspend fun send(session: WebSocketSession) {
+        session.writeText(message)
+    }
+
+    override suspend fun receive(session: WebSocketSession): String {
+        return session.readText()
+    }
+}
+
+/**
+ * writeText Writes text to the web socket. Text that does
+ * not end with a new line will have one appended.
+ *
+ * @param value The text value to write
+ */
+suspend fun WebSocketSession.writeText(value: String) {
+    if (value.endsWith("\n")) {
+        send(value)
+    } else {
+        send("${value}\n")
+    }
+}
+
+/**
+ * readText Extension function on WebSocketSession for reading
+ * strings of text from the websocket connection
+ *
+ * @throws InvalidResponse thrown if the frame wasn't a text frame
+ * @return The text that was read
+ */
 suspend fun WebSocketSession.readText(): String {
-    val msg = incoming.receive() as? Frame.Text
-        ?: throw InvalidResponse("Wasn't expecting non text frame");
-    return msg.readText();
+    var iteration = 0
+    while (iteration < 10) {
+        val msg = incoming.receive();
+        if (msg is Frame.Text) return msg.readText()
+        else if (msg is Frame.Close) {
+            throw UnexpectedlyClosed(msg.readReason())
+        }
+        iteration++
+    }
+    throw RuntimeException("Failed to read response from socket. Too many invalid frames.")
 }
 
-suspend inline fun WebSocketSession.readStream(end: String): String {
+/**
+ * readStream Reads a stream of text from the WebSocketSession
+ * stops reading when it is provided a string that matches
+ * > END
+ *
+ * @throws InvalidResponse thrown if one of the frames wasn't a text frame
+ * @return The combined output of the entire read stream
+ */
+suspend fun WebSocketSession.readStream(): String {
     val output = StringBuilder()
     var line: String
-    while(true) {
+    while (true) {
+        writeText("read") // Request more data from the server
         line = readText()
-        if (line == end) break
+        if (line == "> END") break
         output.append(line)
     }
+    writeText("close") // Tell the server to close the file stream
     return output.toString()
 }
 
-class InvalidResponse(message: String) : RuntimeException(message)
+// The maximum size of the chunks that can be streamed
+// to the server (1024 bytes per frame)
+const val CHUNK_SIZE = 1024
 
-data class MemoryResponse(val totalBytes: Int, val usedBytes: Int, val freeBytes: Int)
-
-class MemoryRequest : Message<MemoryResponse> {
-    override suspend fun send(session: WebSocketSession) {
-        session.send("mem")
+/**
+ * writeStream Writes the provided data value as
+ * a stream onto the server. A stream must be
+ * started before sending data through this
+ *
+ * @param value The data to stream
+ */
+suspend fun WebSocketSession.writeStream(value: String) {
+    var cursor = 0
+    var length: Int
+    var slice: String
+    while(cursor < value.length) {
+        length = if (cursor + CHUNK_SIZE >= value.length) {
+            cursor + CHUNK_SIZE
+        } else {
+            value.length - cursor
+        }
+        slice = value.substring(cursor..length)
+        send(slice) // Newlines aren't appended to streams
+        cursor += length
     }
-
-    override suspend fun receive(session: WebSocketSession): MemoryResponse {
-        val text = session.readText()
-        val lines = text.split('\n', limit = 3)
-        if (lines.size < 3) throw InvalidResponse("Incomplete memory response")
-        return MemoryResponse(
-            parseValue(lines[0]),
-            parseValue(lines[1]),
-            parseValue(lines[2]),
-        )
-    }
-    private fun parseValue(input: String): Int {
-        val parts = input.split(' ', limit = 2)
-        if (parts.isEmpty()) throw InvalidResponse("Incomplete memory response")
-        return parts[0].toIntOrNull() ?: throw InvalidResponse("Invalid memory value")
-    }
+    writeText("close")
 }
