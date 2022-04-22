@@ -204,14 +204,6 @@ class ResetMessage : SettingsMessage() {
 }
 
 /**
- * TerminalMessage Represents a message sent via the user
- * terminal.
- *
- * @constructor Create empty TerminalMessage
- */
-class TerminalMessage(value: String) : SimpleMessage(value)
-
-/**
  * SetSettingMessage Requests that the server change the setting
  * with the provided key to the provided value
  *
@@ -221,6 +213,16 @@ class TerminalMessage(value: String) : SimpleMessage(value)
  * @param value The new value for the setting
  */
 class SetSettingMessage(key: String, value: String) : SimpleMessage("set $key $value")
+
+/**
+ * TerminalMessage Represents a message sent via the user
+ * terminal.
+ *
+ * @constructor Create empty TerminalMessage
+ */
+class TerminalMessage(value: String) : SimpleMessage(value)
+
+const val TEMP_FILE_NAME = "/temporary_script"
 
 /**
  * cleanFileName Cleans up file name so that it can
@@ -250,18 +252,42 @@ class ReadFileMessage(private val name: String) : Message<String> {
     }
 }
 
-class StopScriptMessage(private val name: String) : SimpleMessage("stop \"${cleanFileName(name)}\"")
-class RunScriptMessage(private val name: String) : SimpleMessage("run \"${cleanFileName(name)}\"")
-
-class CreateFileMessage(private val name: String) : Message<String> {
+class WriteFileMessage(private val name: String, private val content: String) : Message<Unit> {
     override suspend fun send(session: WebSocketSession) {
-        session.writeText("")
-        Socket.statusUpdates = true;
-
+        session.message(DeleteFileMessage(TEMP_FILE_NAME))
+        session.message(CreateFileMessage(TEMP_FILE_NAME))
+        session.writeStream(TEMP_FILE_NAME, content)
+        val fileName = cleanFileName(name)
+        session.message(DeleteFileMessage(fileName))
+        session.message(RenameFileMessage(TEMP_FILE_NAME, fileName))
+        Socket.pushStatus()
     }
 
-    override suspend fun receive(session: WebSocketSession): String {
-        return session.readText()
-    }
-
+    override suspend fun receive(session: WebSocketSession) {}
 }
+
+class StopScriptMessage(private val name: String) : SimpleMessage("stop \"${cleanFileName(name)}\"")
+
+class RunScriptMessage(private val name: String) : SimpleMessage("run \"${cleanFileName(name)}\"") {
+    override suspend fun send(session: WebSocketSession) {
+        super.send(session)
+        Socket.statusUpdates = true;
+    }
+}
+
+class CreateFileMessage(private val name: String) : SimpleMessage("create \"${cleanFileName(name)}\"") {
+    override suspend fun send(session: WebSocketSession) {
+        session.message(StopScriptMessage(name))
+        super.send(session)
+    }
+}
+
+class DeleteFileMessage(private val name: String) : SimpleMessage("remove \"${cleanFileName(name)}\"") {
+    override suspend fun send(session: WebSocketSession) {
+        session.message(StopScriptMessage(name))
+        super.send(session)
+    }
+}
+
+class RenameFileMessage(private val oldName: String, private val newName: String)
+    : SimpleMessage("rename \"${cleanFileName(oldName)}\" \"${cleanFileName(newName)}\"")

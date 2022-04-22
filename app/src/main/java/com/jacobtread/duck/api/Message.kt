@@ -48,6 +48,19 @@ open class SimpleMessage(private val message: String) : Message<String> {
 }
 
 /**
+ * sendMessage Sends the provided message to the session and returns
+ * the received response
+ *
+ * @param R The type of the response
+ * @param message The message object to send
+ * @return The received response
+ */
+suspend fun <R> WebSocketSession.message(message: Message<R>): R {
+    message.send(this)
+    return message.receive(this)
+}
+
+/**
  * writeText Writes text to the web socket. Text that does
  * not end with a new line will have one appended.
  *
@@ -113,11 +126,12 @@ const val CHUNK_SIZE = 1024
  *
  * @param value The data to stream
  */
-suspend fun WebSocketSession.writeStream(value: String) {
+suspend fun WebSocketSession.writeStream(to: String, value: String) {
+    writeText("stream \"$to\"")
     var cursor = 0
     var length: Int
     var slice: String
-    while(cursor < value.length) {
+    while (cursor < value.length) {
         length = if (cursor + CHUNK_SIZE >= value.length) {
             cursor + CHUNK_SIZE
         } else {
