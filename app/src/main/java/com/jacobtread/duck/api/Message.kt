@@ -67,6 +67,7 @@ suspend fun <R> WebSocketSession.message(message: Message<R>): R {
  * @param value The text value to write
  */
 suspend fun WebSocketSession.writeText(value: String) {
+    DuckController.history(value)
     if (value.endsWith("\n")) {
         send(value)
     } else {
@@ -85,7 +86,11 @@ suspend fun WebSocketSession.readText(): String {
     var iteration = 0
     while (iteration < 10) {
         val msg = incoming.receive();
-        if (msg is Frame.Text) return msg.readText()
+        if (msg is Frame.Text) {
+            val text = msg.readText()
+            DuckController.history(text)
+            return text
+        }
         else if (msg is Frame.Close) throw UnexpectedlyClosed(msg.readReason())
         iteration++
     }
@@ -117,6 +122,11 @@ suspend fun WebSocketSession.readStream(): String {
 // to the server (1024 bytes per frame)
 const val CHUNK_SIZE = 1024
 
+suspend fun WebSocketSession.write(value: String) {
+    DuckController.history(value)
+    send(value)
+}
+
 /**
  * writeStream Writes the provided data value as
  * a stream onto the server. A stream must be
@@ -136,7 +146,7 @@ suspend fun WebSocketSession.writeStream(to: String, value: String) {
             value.length - cursor
         }
         slice = value.substring(cursor..length)
-        send(slice) // Newlines aren't appended to streams
+        write(slice) // Newlines aren't appended to streams
         cursor += length
     }
     writeText("close")

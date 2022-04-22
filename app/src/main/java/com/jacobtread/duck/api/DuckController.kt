@@ -9,9 +9,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
+import java.util.function.Consumer
 
 fun interface ResponseConsumer<R> {
     fun consume(value: R)
+}
+
+ interface TerminalConsumer {
+    fun bulk(value: List<String>)
+
+    fun consume(value: String)
 }
 
 typealias MessageQueue = ArrayDeque<QueueItem<*>>
@@ -40,9 +47,22 @@ object DuckController {
     private val queue = MessageQueue()
 
     var stateConsumer: ResponseConsumer<String>? = null
+    var terminalConsumer: TerminalConsumer? = null
+        set(value) {
+            value?.bulk(messageHistory)
+            field = value
+        }
 
     // The time in milliseconds of the last status update
     private var lastStatusUpdate = -1L
+
+    private var messageHistory = ArrayList<String>();
+
+    fun history(value: String) {
+        messageHistory.add(value)
+        terminalConsumer?.consume(value)
+        println(value)
+    }
 
     /**
      * push Pushes a new message to the end of the queue.

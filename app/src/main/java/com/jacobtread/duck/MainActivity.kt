@@ -5,12 +5,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,10 +25,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.jacobtread.duck.api.DuckController
-import com.jacobtread.duck.api.ResponseConsumer
-import com.jacobtread.duck.api.SettingsMessage
+import com.jacobtread.duck.api.*
 import com.jacobtread.duck.ui.theme.DuckCentralTheme
+import kotlinx.coroutines.runBlocking
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -189,7 +187,52 @@ fun Files(navController: NavHostController) {
 
 @Composable
 fun Terminal(navController: NavHostController) {
-    Text("Terminal Page")
+    val lines = remember { mutableStateListOf<String>() }
+    val scrollState = rememberLazyListState()
+    SideEffect {
+        DuckController.terminalConsumer = object : TerminalConsumer {
+            override fun bulk(value: List<String>) {
+                lines.addAll(value)
+            }
+
+            override fun consume(value: String) {
+                lines.add(value)
+                runBlocking {
+                    scrollState.scrollToItem(lines.size - 1)
+                }
+            }
+        }
+    }
+
+
+    Column {
+        Text("Terminal Page")
+        LazyColumn(
+            state = scrollState
+        ) {
+            items(lines.size) {
+                val line = lines[it]
+                Text(line)
+            }
+        }
+        Row {
+            var message = ""
+            TextField(
+                message,
+                onValueChange = {
+                    message = it
+                }
+            )
+            IconButton(onClick = {
+                if (message.isNotBlank()) {
+                    DuckController.push(TerminalMessage(message)) {}
+                }
+            }) {
+                Icon(Icons.Filled.Send, contentDescription = "Send")
+            }
+
+        }
+    }
 }
 
 @Composable
