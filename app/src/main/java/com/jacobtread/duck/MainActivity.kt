@@ -3,6 +3,7 @@ package com.jacobtread.duck
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -11,9 +12,9 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -75,7 +76,6 @@ enum class State {
 }
 
 
-
 @Preview(showBackground = true)
 @Composable
 fun App() {
@@ -96,14 +96,18 @@ fun App() {
         })
     }
     val context = LocalContext.current
-    DuckController.stateConsumer = ResponseConsumer {
-//        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-    }
     when (state) {
         State.Connecting -> Loader("Connecting to socket..")
         State.Settings -> Loader("Loading settings..")
         State.Done -> Pages(navController)
     }
+}
+
+sealed class PageState(var text: String, var color: Color) {
+    object Waiting : PageState("Waiting", Color(0xFFF4D32E))
+    object Connected : PageState("Connected", Color(0xFF51C158))
+    object Running : PageState("Running Unknown Script", Color(0xFF2EF431))
+    object Error : PageState("Connection Problem", Color(0xFFF42E42))
 }
 
 @Composable
@@ -114,7 +118,34 @@ fun Pages(navController: NavHostController) {
         Page.Terminal,
         Page.Settings
     )
+    var pageState by remember { mutableStateOf<PageState>(PageState.Waiting) }
+    DuckController.stateConsumer = ResponseConsumer {
+        if (it.startsWith("running")) {
+            pageState = PageState.Running
+            val parts = it.split(' ', limit = 1)
+            if (parts.size < 2) {
+                pageState.text = "Running Unknown Script"
+            } else {
+                pageState.text = "Running Script \"${parts[1]}\""
+            }
+        } else if (it.startsWith("connected")) {
+            pageState = PageState.Connected
+
+        } else if (it == "Internal connection problem") {
+            pageState = PageState.Error
+        }
+    }
     Scaffold(
+        topBar = {
+            Box(
+                modifier = Modifier.fillMaxWidth()
+                    .background(pageState.color)
+                    .padding(10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(pageState.text)
+            }
+        },
         bottomBar = {
             BottomNavigation {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -137,7 +168,7 @@ fun Pages(navController: NavHostController) {
             }
         }
     ) {
-        NavHost(navController, startDestination = Page.Home.route) {
+        NavHost(navController, startDestination = Page.Home.route, modifier = Modifier.padding(15.dp)) {
             composable(Page.Home.route) { Home(navController) }
             composable(Page.Files.route) { Files(navController) }
             composable(Page.Terminal.route) { Terminal(navController) }
