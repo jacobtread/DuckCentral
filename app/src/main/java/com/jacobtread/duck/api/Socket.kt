@@ -25,6 +25,7 @@ object Socket {
             runBlocking {
                 withContext(Dispatchers.IO) {
                     client.webSocket(method = HttpMethod.Get, host = HOST_ADDR, port = HOST_PORT) {
+
                         while (true) {
                             val message = incoming.receive() as? Frame.Text
                             message.readText();

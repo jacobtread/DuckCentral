@@ -1,19 +1,43 @@
 package com.jacobtread.duck.api
 
+import io.ktor.websocket.*
+
 interface Message<R> {
 
-    fun build(): String;
+    suspend fun send(session: WebSocketSession);
 
-    fun parse(input: String): R
+    suspend fun receive(session: WebSocketSession): R
+
 }
 
-abstract class StreamedMessage<R> : Message<R> {
+suspend inline fun takeText(session: WebSocketSession): String {
+    val msg = session.incoming.receive() as? Frame.Text
+        ?: throw InvalidResponse("Wasn't expecting non text frame");
+    return msg.readText();
+}
 
-    val contents = StringBuilder();
+class InvalidResponse(message: String) : RuntimeException(message)
 
-    fun consume(input: String): Boolean {
-        if (input == "> END") return true;
-        contents.append(input);
-        return false
+data class MemoryResponse(val totalBytes: Int, val usedBytes: Int, val freeBytes: Int)
+
+class MemoryRequest : Message<MemoryResponse> {
+    override suspend fun send(session: WebSocketSession) {
+        session.send("mem")
+    }
+
+    override suspend fun receive(session: WebSocketSession): MemoryResponse {
+        val text = takeText(session)
+        val lines = text.split('\n', limit = 3)
+        if (lines.size < 3) throw InvalidResponse("Incomplete memory response")
+        return MemoryResponse(
+            parseValue(lines[0]),
+            parseValue(lines[1]),
+            parseValue(lines[2]),
+        )
+    }
+    private fun parseValue(input: String): Int {
+        val parts = input.split(' ', limit = 2)
+        if (parts.isEmpty()) throw InvalidResponse("Incomplete memory response")
+        return parts[0].toIntOrNull() ?: throw InvalidResponse("Invalid memory value")
     }
 }
