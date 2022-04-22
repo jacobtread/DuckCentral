@@ -1,20 +1,17 @@
 package com.jacobtread.duck.api
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import io.ktor.client.*
-import io.ktor.client.engine.android.*
+import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.http.*
 import io.ktor.websocket.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 fun interface ResponseConsumer<R> {
     fun consume(value: R)
+}
+
+fun interface StateConsumer {
+    fun consume(value: String)
 }
 
 typealias MessageQueue = ArrayDeque<QueueItem<*>>
@@ -39,11 +36,7 @@ object DuckController {
     // The queue of messages to be sent along with their handlers
     private val queue = MessageQueue()
 
-    // The state representing the status of the socket
-    var status by remember { mutableStateOf("waiting") }
-
-    // A handler for updating the status based on the consumed response
-    private val statusHandler = ResponseConsumer<String> { status = it }
+    var stateConsumer: ResponseConsumer<String>? = null
 
     // The time in milliseconds of the last status update
     private var lastStatusUpdate = -1L
@@ -65,7 +58,11 @@ object DuckController {
      * pushStatus Shortcut method for sending status requests to the server
      * and handling them with status handler which updates the internal state
      */
-    fun pushStatus() = push(StatusMessage(), statusHandler)
+    fun pushStatus() {
+        if (stateConsumer != null) {
+            push(StatusMessage(), stateConsumer!!)
+        }
+    }
 
     /**
      * connect Connects to the web socket server
@@ -74,14 +71,11 @@ object DuckController {
      * @param port The port of the web socket server
      */
     suspend fun connect(host: String = HOST_ADDR, port: Int = HOST_PORT) {
-        val client = HttpClient(Android) {
+        val client = HttpClient(CIO) {
             install(WebSockets)
         }
-        CoroutineScope(Dispatchers.IO).launch {
-            client.webSocket(method = HttpMethod.Get, host = host, port = port) {
-                run(this)
-
-            }
+        client.webSocket(method = HttpMethod.Get, path = "/ws", host = host, port = port) {
+            run(this)
         }
     }
 

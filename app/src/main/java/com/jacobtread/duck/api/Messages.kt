@@ -260,7 +260,7 @@ class WriteFileMessage(private val name: String, private val content: String) : 
         val fileName = cleanFileName(name)
         session.message(DeleteFileMessage(fileName))
         session.message(RenameFileMessage(TEMP_FILE_NAME, fileName))
-        Socket.pushStatus()
+        DuckController.pushStatus()
     }
 
     override suspend fun receive(session: WebSocketSession) {}
@@ -271,7 +271,7 @@ class StopScriptMessage(private val name: String) : SimpleMessage("stop \"${clea
 class RunScriptMessage(private val name: String) : SimpleMessage("run \"${cleanFileName(name)}\"") {
     override suspend fun send(session: WebSocketSession) {
         super.send(session)
-        Socket.statusUpdates = true;
+        DuckController.statusUpdates = true;
     }
 }
 
