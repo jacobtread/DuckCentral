@@ -43,9 +43,9 @@ class MainActivity : ComponentActivity() {
 
 sealed class Screen(val route: String, val icon: ImageVector, val name: String) {
     object Home : Screen("home", Icons.Filled.Home, "Home")
-    object Files : Screen("files", Icons.Filled.Home, "Files")
-    object Terminal : Screen("terminal", Icons.Filled.Home, "Terminal")
-    object Settings : Screen("settings", Icons.Filled.Home, "Settings")
+    object Files : Screen("files", Icons.Filled.Folder, "Files")
+    object Terminal : Screen("terminal", Icons.Filled.Code, "Terminal")
+    object Settings : Screen("settings", Icons.Filled.Settings, "Settings")
 }
 
 @Preview(showBackground = true)
@@ -92,20 +92,21 @@ fun App() {
 
 @Composable
 fun Home(navController: NavHostController) {
-
+    Text("Home Page")
 }
 
 @Composable
 fun Files(navController: NavHostController) {
-
+    Text("Files Page")
 }
 
 @Composable
 fun Terminal(navController: NavHostController) {
-
+    Text("Terminal Page")
 }
 
 @Composable
 fun Settings(navController: NavHostController) {
+    Text("Settings Page")
 
 }
