@@ -10,10 +10,21 @@ interface Message<R> {
 
 }
 
-suspend inline fun takeText(session: WebSocketSession): String {
-    val msg = session.incoming.receive() as? Frame.Text
+suspend fun WebSocketSession.readText(): String {
+    val msg = incoming.receive() as? Frame.Text
         ?: throw InvalidResponse("Wasn't expecting non text frame");
     return msg.readText();
+}
+
+suspend inline fun WebSocketSession.readStream(end: String): String {
+    val output = StringBuilder()
+    var line: String
+    while(true) {
+        line = readText()
+        if (line == end) break
+        output.append(line)
+    }
+    return output.toString()
 }
 
 class InvalidResponse(message: String) : RuntimeException(message)
@@ -26,7 +37,7 @@ class MemoryRequest : Message<MemoryResponse> {
     }
 
     override suspend fun receive(session: WebSocketSession): MemoryResponse {
-        val text = takeText(session)
+        val text = session.readText()
         val lines = text.split('\n', limit = 3)
         if (lines.size < 3) throw InvalidResponse("Incomplete memory response")
         return MemoryResponse(
