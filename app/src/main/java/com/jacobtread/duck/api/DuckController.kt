@@ -14,10 +14,6 @@ fun interface ResponseConsumer<R> {
     fun consume(value: R)
 }
 
-fun interface StateConsumer {
-    fun consume(value: String)
-}
-
 typealias MessageQueue = ArrayDeque<QueueItem<*>>
 
 data class QueueItem<R>(val message: Message<R>, val handler: ResponseConsumer<R>)
@@ -57,7 +53,6 @@ object DuckController {
      */
     fun <R> push(message: Message<R>, handler: ResponseConsumer<R>) {
         synchronized(queue) {
-            println("PUSHING NEW MESSAGE $message")
             queue.addLast(QueueItem(message, handler))
         }
     }
@@ -78,14 +73,18 @@ object DuckController {
      * @param host The host of the web socket server
      * @param port The port of the web socket server
      */
-    suspend fun connect(host: String = HOST_ADDR, port: Int = HOST_PORT) {
-        val client = HttpClient(CIO) {
-            install(WebSockets)
-        }
-        client.webSocket(method = HttpMethod.Get, path = "/ws", host = host, port = port) {
-            val session = this;
-            CoroutineScope(Pool).launch {
-                run(session)
+    fun connect(host: String = HOST_ADDR, port: Int = HOST_PORT, callback: (e: Exception?) -> Unit) {
+        CoroutineScope(Pool).launch {
+            try {
+                val client = HttpClient(CIO) { install(WebSockets) }
+                client.webSocket(method = HttpMethod.Get, path = "/ws", host = HOST_ADDR, port = port) {
+                    callback(null)
+                    val session = this;
+                    run(session)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                callback(e)
             }
         }
     }

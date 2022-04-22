@@ -86,9 +86,7 @@ suspend fun WebSocketSession.readText(): String {
     while (iteration < 10) {
         val msg = incoming.receive();
         if (msg is Frame.Text) return msg.readText()
-        else if (msg is Frame.Close) {
-            throw UnexpectedlyClosed(msg.readReason())
-        }
+        else if (msg is Frame.Close) throw UnexpectedlyClosed(msg.readReason())
         iteration++
     }
     throw RuntimeException("Failed to read response from socket. Too many invalid frames.")

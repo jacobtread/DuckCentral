@@ -11,9 +11,11 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -27,11 +29,6 @@ import com.jacobtread.duck.api.DuckController
 import com.jacobtread.duck.api.ResponseConsumer
 import com.jacobtread.duck.api.SettingsMessage
 import com.jacobtread.duck.ui.theme.DuckCentralTheme
-import io.ktor.client.network.sockets.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import java.io.IOException
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,69 +68,81 @@ fun Loader(text: String) {
     }
 }
 
+enum class State {
+    Connecting,
+    Settings,
+    Done
+}
+
+
+
 @Preview(showBackground = true)
 @Composable
 fun App() {
     val navController = rememberNavController()
-    var hasConnection by remember { mutableStateOf(false) }
-    var state by remember { mutableStateOf("Connecting") }
-    CoroutineScope(Dispatchers.IO).launch {
-        try {
-            DuckController.connect()
-            hasConnection = true
-            state = "Connected"
-            DuckController.push(SettingsMessage()) {
-                println("Recieved settings")
-                println(it)
-            }
-        } catch (e: ConnectTimeoutException) {
-            e.printStackTrace()
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-    }
-    DuckController.stateConsumer = ResponseConsumer {
-        state = it
-    }
-    if (hasConnection) {
-        val items = listOf(
-            Page.Home,
-            Page.Files,
-            Page.Terminal,
-            Page.Settings
-        )
-        Scaffold(
-            bottomBar = {
-                BottomNavigation {
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-                    val currentDestination = navBackStackEntry?.destination
-                    items.forEach { screen ->
-                        BottomNavigationItem(
-                            icon = { Icon(screen.icon, contentDescription = null) },
-                            selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
-                            onClick = {
-                                navController.navigate(screen.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            }
-                        )
-                    }
+    var state by remember { mutableStateOf(State.Connecting) }
+    LaunchedEffect(true) {
+        DuckController.connect(callback = { e ->
+            if (e != null) {
+                e.printStackTrace()
+            } else {
+                state = State.Settings
+                DuckController.push(SettingsMessage()) {
+                    println("Received settings")
+                    println(it)
+                    state = State.Done
                 }
             }
-        ) {
-            NavHost(navController, startDestination = Page.Home.route) {
-                composable(Page.Home.route) { Home(navController) }
-                composable(Page.Files.route) { Files(navController) }
-                composable(Page.Terminal.route) { Terminal(navController) }
-                composable(Page.Settings.route) { Settings(navController) }
+        })
+    }
+    val context = LocalContext.current
+    DuckController.stateConsumer = ResponseConsumer {
+//        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+    }
+    when (state) {
+        State.Connecting -> Loader("Connecting to socket..")
+        State.Settings -> Loader("Loading settings..")
+        State.Done -> Pages(navController)
+    }
+}
+
+@Composable
+fun Pages(navController: NavHostController) {
+    val items = listOf(
+        Page.Home,
+        Page.Files,
+        Page.Terminal,
+        Page.Settings
+    )
+    Scaffold(
+        bottomBar = {
+            BottomNavigation {
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentDestination = navBackStackEntry?.destination
+                items.forEach { screen ->
+                    BottomNavigationItem(
+                        icon = { Icon(screen.icon, contentDescription = null) },
+                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                        onClick = {
+                            navController.navigate(screen.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    )
+                }
             }
         }
-    } else {
-        Loader("Connecting to socket..")
+    ) {
+        NavHost(navController, startDestination = Page.Home.route) {
+            composable(Page.Home.route) { Home(navController) }
+            composable(Page.Files.route) { Files(navController) }
+            composable(Page.Terminal.route) { Terminal(navController) }
+            composable(Page.Settings.route) { Settings(navController) }
+        }
     }
 }
 
