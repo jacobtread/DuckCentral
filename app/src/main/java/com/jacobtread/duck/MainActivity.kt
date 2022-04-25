@@ -161,10 +161,15 @@ fun Pages(navController: NavHostController) {
             }
         },
         content = {
-            NavHost(navController, startDestination = HomePage.route, modifier = Modifier.fillMaxSize().padding(it)) {
+            NavHost(navController, startDestination = HomePage.route, modifier = Modifier.fillMaxSize()
+                .padding(it)) {
                 pages.forEach { page ->
                     composable(page.route) {
-                        page.Root(navController, Modifier.fillMaxSize())
+                        Surface {
+                            page.Root(navController, Modifier
+                                .padding(15.dp)
+                                .fillMaxSize())
+                        }
                     }
                 }
             }

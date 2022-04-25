@@ -1,5 +1,6 @@
 package com.jacobtread.duck.screens
 
+import android.view.WindowInsets
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,27 +14,26 @@ import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import com.jacobtread.duck.api.DuckController
 import com.jacobtread.duck.api.TerminalConsumer
 import com.jacobtread.duck.api.TerminalMessage
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.imePadding
 
 object TerminalPage : Page("terminal", Icons.Filled.Code, "Terminal") {
 
     @Composable
-    fun UserInput() {
-        Row {
-            var message = ""
+    fun UserInput(modifier: Modifier) {
+
+        Row(modifier) {
+            val (message, setMessage) = remember { mutableStateOf("") }
+
             TextField(
-                message,
-                onValueChange = {
-                    message = it
-                }
+                value = message,
+                onValueChange = setMessage,
             )
             IconButton(onClick = {
                 if (message.isNotBlank()) {
@@ -87,7 +87,11 @@ object TerminalPage : Page("terminal", Icons.Filled.Code, "Terminal") {
                 Modifier.weight(1f)
                     .fillMaxSize()
             )
-            UserInput()
+            UserInput(
+                Modifier
+                    .navigationBarsPadding()
+                    .imePadding()
+            )
         }
     }
 }
