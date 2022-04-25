@@ -1,6 +1,5 @@
 package com.jacobtread.duck.screens
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -53,21 +52,18 @@ object TerminalPage : Page("terminal", Icons.Filled.Code, "Terminal") {
         scrollState: LazyListState,
         modifier: Modifier = Modifier,
     ) {
-        Box(modifier = modifier) {
-            LazyColumn(
-                state = scrollState,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                for (index in lines.indices) {
-                    item {
-                        val line = lines[index]
-                        Text(line)
-                    }
+        LazyColumn(
+            state = scrollState,
+            modifier = modifier
+        ) {
+            for (index in lines.indices) {
+                item {
+                    val line = lines[index]
+                    Text(line)
                 }
             }
         }
     }
-
 
     @Composable
     override fun Root(navController: NavHostController, modifier: Modifier) {
@@ -89,9 +85,9 @@ object TerminalPage : Page("terminal", Icons.Filled.Code, "Terminal") {
                 lines,
                 scrollState,
                 Modifier.weight(1f)
+                    .fillMaxSize()
             )
             UserInput()
         }
     }
 }
-

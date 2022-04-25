@@ -20,7 +20,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.jacobtread.duck.api.*
+import com.jacobtread.duck.api.DuckController
+import com.jacobtread.duck.api.ResponseConsumer
+import com.jacobtread.duck.api.SettingsMessage
 import com.jacobtread.duck.screens.FilesPage
 import com.jacobtread.duck.screens.HomePage
 import com.jacobtread.duck.screens.SettingsPage
@@ -127,11 +129,12 @@ fun Pages(navController: NavHostController) {
     }
     Scaffold(
         topBar = {
-            Box(
+            Row(
                 modifier = Modifier.fillMaxWidth()
                     .background(pageState.color)
                     .padding(10.dp),
-                contentAlignment = Alignment.Center
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(pageState.text)
             }
@@ -156,14 +159,15 @@ fun Pages(navController: NavHostController) {
                     )
                 }
             }
-        }
-    ) {
-        NavHost(navController, startDestination = HomePage.route, modifier = Modifier.padding(15.dp)) {
-            pages.forEach { page ->
-                composable(page.route) {
-                    page.Root(navController, Modifier.fillMaxSize())
+        },
+        content = {
+            NavHost(navController, startDestination = HomePage.route, modifier = Modifier.fillMaxSize().padding(it)) {
+                pages.forEach { page ->
+                    composable(page.route) {
+                        page.Root(navController, Modifier.fillMaxSize())
+                    }
                 }
             }
         }
-    }
+    )
 }
