@@ -28,7 +28,9 @@ class TerminalState {
     val lines = mutableStateListOf<String>()
 
     fun addHistory(line: String) {
-        lines.add(line)
+        line.split('\n')
+            .filter { it.isNotBlank() }
+            .toCollection(lines)
         scope?.launch {
             val state = scrollState;
             if (state != null && !state.isScrollInProgress) {
@@ -68,6 +70,7 @@ object DuckController {
     private var lastStatusUpdate = -1L
 
     fun history(value: String) {
+        if (value.isBlank()) return
         terminalState.addHistory(value)
         println(value)
     }
