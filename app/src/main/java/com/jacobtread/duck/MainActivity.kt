@@ -36,7 +36,10 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             DuckCentralTheme {
-                Surface(color = MaterialTheme.colors.background) {
+                Surface(
+                    color = MaterialTheme.colors.background,
+                    modifier = Modifier.imePadding().navigationBarsPadding()
+                ) {
                     App()
                 }
             }

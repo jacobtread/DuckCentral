@@ -22,6 +22,9 @@ import com.jacobtread.duck.api.TerminalConsumer
 import com.jacobtread.duck.api.TerminalMessage
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.imePadding
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 object TerminalPage : Page("terminal", Icons.Filled.Code, "Terminal") {
 
@@ -69,14 +72,21 @@ object TerminalPage : Page("terminal", Icons.Filled.Code, "Terminal") {
     override fun Root(navController: NavHostController, modifier: Modifier) {
         val lines = remember { mutableStateListOf<String>() }
         val scrollState = rememberLazyListState()
+        val scope = rememberCoroutineScope();
         SideEffect {
             DuckController.terminalConsumer = object : TerminalConsumer {
                 override fun bulk(value: List<String>) {
                     lines.addAll(value)
+                    scope.launch {
+                        scrollState.scrollToItem(lines.size - 1)
+                    }
                 }
 
                 override fun consume(value: String) {
                     lines.add(value)
+                    scope.launch {
+                        scrollState.scrollToItem(lines.size - 1)
+                    }
                 }
             }
         }
