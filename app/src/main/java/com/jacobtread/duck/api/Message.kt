@@ -95,6 +95,14 @@ suspend fun WebSocketSession.readText(history: Boolean = true): String {
     throw RuntimeException("Failed to read response from socket. Too many invalid frames.")
 }
 
+suspend fun WebSocketSession.readTextSplit(limit: Int, history: Boolean = true): List<String> {
+    val text = readText(history);
+    return text.split('\n', limit = limit)
+        .filter { it.isNotBlank() }
+        .map { line -> line.trimEnd { it == '\n' }}
+        .toList()
+}
+
 /**
  * readStream Reads a stream of text from the WebSocketSession
  * stops reading when it is provided a string that matches

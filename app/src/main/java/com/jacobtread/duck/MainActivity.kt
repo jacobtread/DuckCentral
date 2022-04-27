@@ -22,13 +22,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.jacobtread.duck.api.DuckController
-import com.jacobtread.duck.api.ResponseConsumer
+import com.jacobtread.duck.api.ResponseHandler
 import com.jacobtread.duck.api.SettingsMessage
 import com.jacobtread.duck.screens.FilesPage
 import com.jacobtread.duck.screens.HomePage
 import com.jacobtread.duck.screens.SettingsPage
 import com.jacobtread.duck.screens.TerminalPage
 import com.jacobtread.duck.ui.theme.DuckCentralTheme
+import com.jacobtread.duck.ui.theme.Title
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -93,7 +94,6 @@ fun App() {
             }
         })
     }
-    val context = LocalContext.current
     when (state) {
         State.Connecting -> Loader("Connecting to socket..")
         State.Settings -> Loader("Loading settings..")
@@ -117,19 +117,20 @@ fun Pages(navController: NavHostController) {
         SettingsPage
     )
     var pageState by remember { mutableStateOf<PageState>(PageState.Waiting) }
-    DuckController.stateConsumer = ResponseConsumer {
-        if (it.startsWith("running")) {
+    DuckController.stateConsumer = ResponseHandler {
+        val value = it.getOrDefault("Internal connection problem")
+        if (value.startsWith("running")) {
             pageState = PageState.Running
-            val parts = it.split(' ', limit = 1)
+            val parts = value.split(' ', limit = 1)
             if (parts.size < 2) {
                 pageState.text = "Running Unknown Script"
             } else {
                 pageState.text = "Running Script \"${parts[1]}\""
             }
-        } else if (it.startsWith("connected")) {
+        } else if (value.startsWith("connected")) {
             pageState = PageState.Connected
 
-        } else if (it == "Internal connection problem") {
+        } else if (value == "Internal connection problem") {
             pageState = PageState.Error
         }
     }
@@ -172,8 +173,13 @@ fun Pages(navController: NavHostController) {
                 pages.forEach { page ->
                     composable(page.route) {
                         Surface {
-                            page.Root(navController, Modifier
-                                .fillMaxSize())
+                            Column(
+                                modifier = Modifier.fillMaxSize()
+                                    .padding(15.dp)
+                            ) {
+                                Title(page.name)
+                                page.Root(navController, Modifier)
+                            }
                         }
                     }
                 }

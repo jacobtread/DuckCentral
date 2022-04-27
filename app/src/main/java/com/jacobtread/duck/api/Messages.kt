@@ -127,14 +127,14 @@ class FilesMessage : Message<FileList> {
 
     override suspend fun receive(session: WebSocketSession): FileList {
         val message = session.readText()
-        val lines = message.split("\n")
-        val files = ArrayList<File>(lines.size)
-        lines.forEach {
+        val lines = message.split('\n')
+        val files = ArrayList<File>()
+        lines.filter {it.isNotBlank() } .map {
             val parts = it.split(' ', limit = 2)
             if (parts.size < 2) throw InvalidResponse("File list response invalid number of parts")
             val size = parts[1].toIntOrNull() ?: throw InvalidResponse("File size was not a number")
-            files.add(File(parts[0], size))
-        }
+            File(parts[0], size)
+        }.toCollection(files)
         return files
     }
 
@@ -172,8 +172,7 @@ open class SettingsMessage : Message<Settings> {
     }
 
     override suspend fun receive(session: WebSocketSession): Settings {
-        val lines = session.readText()
-            .split('\n', limit = 4)
+        val lines = session.readTextSplit(4)
         if (lines.size < 4) throw InvalidResponse("Settings response was missing value")
         return Settings(
             parseValue(lines[0]),

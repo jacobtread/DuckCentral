@@ -1,10 +1,17 @@
 package com.jacobtread.duck.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 
 private val DarkColorPalette = darkColors(
     primary = Purple200,
@@ -41,4 +48,9 @@ fun DuckCentralTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Compo
         shapes = Shapes,
         content = content
     )
+}
+
+@Composable
+fun Title(text: String) {
+    Text(text, fontSize = 5.em, fontWeight = FontWeight.Bold, modifier = Modifier.padding(5.dp))
 }

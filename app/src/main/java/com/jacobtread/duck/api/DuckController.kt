@@ -12,13 +12,14 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.util.concurrent.Executors
 
-fun interface ResponseConsumer<R> {
-    fun consume(value: R)
+fun interface ResponseHandler<R> {
+    fun result(value: Result<R>)
 }
+
 
 typealias MessageQueue = ArrayDeque<QueueItem<*>>
 
-data class QueueItem<R>(val message: Message<R>, val handler: ResponseConsumer<R>)
+data class QueueItem<R>(val message: Message<R>, val handler: ResponseHandler<R>)
 
 class TerminalState {
     var scrollState: LazyListState? = null
@@ -37,9 +38,7 @@ class TerminalState {
             }
         }
     }
-
 }
-
 
 object DuckController {
 
@@ -62,7 +61,7 @@ object DuckController {
     // The queue of messages to be sent along with their handlers
     private val queue = MessageQueue()
 
-    var stateConsumer: ResponseConsumer<String>? = null
+    var stateConsumer: ResponseHandler<String>? = null
     private var terminalState = TerminalState()
 
     // The time in milliseconds of the last status update
@@ -89,13 +88,14 @@ object DuckController {
     }
 
     suspend fun <R> waitFor(message: Message<R>): R = coroutineScope {
-        val channel = Channel<R>()
+        val channel = Channel<Result<R>>()
         launch {
             push(message) {
                 runBlocking { channel.send(it) }
             }
         }
-        return@coroutineScope channel.receive();
+        val value = channel.receive();
+        return@coroutineScope value.getOrThrow()
     }
 
     /**
@@ -105,7 +105,7 @@ object DuckController {
      * @param message The message to add to the send queue
      * @param handler The handler for when the message is sent and the response is received
      */
-    fun <R> push(message: Message<R>, handler: ResponseConsumer<R>) {
+    fun <R> push(message: Message<R>, handler: ResponseHandler<R>) {
         synchronized(queue) {
             queue.addLast(QueueItem(message, handler))
         }
@@ -176,7 +176,11 @@ object DuckController {
      * @param session The session to consume on
      */
     private suspend fun <R> consumeItem(item: QueueItem<R>, session: WebSocketSession) {
-        val response = session.message(item.message)
-        item.handler.consume(response)
+        try {
+            val response = session.message(item.message)
+            item.handler.result(Result.success(response))
+        } catch (e: Throwable) {
+            item.handler.result(Result.failure(e))
+        }
     }
 }
