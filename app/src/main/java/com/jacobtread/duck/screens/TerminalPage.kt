@@ -11,15 +11,14 @@ import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.jacobtread.duck.api.DuckController
 import com.jacobtread.duck.api.TerminalMessage
 import com.jacobtread.duck.api.TerminalState
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 
 object TerminalPage : Page("terminal", Icons.Filled.Code, "Terminal") {
@@ -78,6 +77,7 @@ object TerminalPage : Page("terminal", Icons.Filled.Code, "Terminal") {
                 if (message.isNotBlank()) {
                     DuckController.push(TerminalMessage(message)) {}
                 }
+                setMessage("")
             }) {
                 Icon(Icons.Filled.Send, contentDescription = "Send")
             }
