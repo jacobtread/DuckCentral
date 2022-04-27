@@ -1,5 +1,6 @@
 package com.jacobtread.duck.api
 
+import com.jacobtread.duck.screens.TerminalState
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.websocket.*
@@ -13,12 +14,6 @@ import java.util.function.Consumer
 
 fun interface ResponseConsumer<R> {
     fun consume(value: R)
-}
-
- interface TerminalConsumer {
-    fun bulk(value: List<String>)
-
-    fun consume(value: String)
 }
 
 typealias MessageQueue = ArrayDeque<QueueItem<*>>
@@ -47,7 +42,7 @@ object DuckController {
     private val queue = MessageQueue()
 
     var stateConsumer: ResponseConsumer<String>? = null
-    var terminalConsumer: TerminalConsumer? = null
+    var terminalState: TerminalState? = null
         set(value) {
             value?.bulk(messageHistory)
             field = value
@@ -60,7 +55,7 @@ object DuckController {
 
     fun history(value: String) {
         messageHistory.add(value)
-        terminalConsumer?.consume(value)
+        terminalState?.line(value)
         println(value)
     }
 
@@ -97,7 +92,7 @@ object DuckController {
         CoroutineScope(Pool).launch {
             try {
                 val client = HttpClient(CIO) { install(WebSockets) }
-                client.webSocket(method = HttpMethod.Get, path = "/ws", host = HOST_ADDR, port = port) {
+                client.webSocket(method = HttpMethod.Get, path = "/ws", host = host, port = port) {
                     callback(null)
                     val session = this;
                     run(session)

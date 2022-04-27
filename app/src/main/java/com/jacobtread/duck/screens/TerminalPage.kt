@@ -1,9 +1,6 @@
 package com.jacobtread.duck.screens
 
-import android.view.WindowInsets
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -16,47 +13,54 @@ import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.jacobtread.duck.api.DuckController
-import com.jacobtread.duck.api.TerminalConsumer
 import com.jacobtread.duck.api.TerminalMessage
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.imePadding
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+
+class TerminalState(private val scrollState: LazyListState, private val scope: CoroutineScope) {
+    val lines = mutableStateListOf<String>()
+
+    private fun update() {
+        scope.launch {
+            if (!scrollState.isScrollInProgress) {
+                scrollState.animateScrollToItem(lines.size - 1)
+            }
+        }
+    }
+
+
+    fun bulk(value: List<String>) {
+        lines.addAll(value)
+        update()
+    }
+
+    fun line(value: String) {
+        lines.add(value)
+        update()
+    }
+}
+
 
 object TerminalPage : Page("terminal", Icons.Filled.Code, "Terminal") {
 
     @Composable
     override fun Root(navController: NavHostController, modifier: Modifier) {
-        val lines = remember { mutableStateListOf<String>() }
-        val scrollState = rememberLazyListState()
         val scope = rememberCoroutineScope();
-        SideEffect {
-            DuckController.terminalConsumer = object : TerminalConsumer {
-                fun update() {
-                    scope.launch {
-                        if (!scrollState.isScrollInProgress) {
-                            scrollState.animateScrollToItem(lines.size - 1)
-                        }
-                    }
-                }
-
-                override fun bulk(value: List<String>) {
-                    lines.addAll(value)
-                    update()
-                }
-
-                override fun consume(value: String) {
-                    lines.add(value)
-                    update()
-                }
+        val scrollState = rememberLazyListState()
+        val terminalState = remember { TerminalState(scrollState, scope) }
+        DisposableEffect(LocalLifecycleOwner.current) {
+            DuckController.terminalState = terminalState;
+            onDispose {
+                DuckController.terminalState = null;
             }
         }
+
         Column(modifier) {
             Messages(
-                lines,
+                terminalState,
                 scrollState,
                 Modifier.weight(1f)
                     .fillMaxSize()
@@ -71,7 +75,7 @@ object TerminalPage : Page("terminal", Icons.Filled.Code, "Terminal") {
 
     @Composable
     fun Messages(
-        lines: List<String>,
+        state: TerminalState,
         scrollState: LazyListState,
         modifier: Modifier = Modifier,
     ) {
@@ -79,9 +83,9 @@ object TerminalPage : Page("terminal", Icons.Filled.Code, "Terminal") {
             state = scrollState,
             modifier = modifier
         ) {
-            for (index in lines.indices) {
+            for (index in state.lines.indices) {
                 item {
-                    val line = lines[index]
+                    val line = state.lines[index]
                     Text(line)
                 }
             }

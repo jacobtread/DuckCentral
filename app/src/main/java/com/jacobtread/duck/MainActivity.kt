@@ -173,7 +173,6 @@ fun Pages(navController: NavHostController) {
                     composable(page.route) {
                         Surface {
                             page.Root(navController, Modifier
-                                .padding(15.dp)
                                 .fillMaxSize())
                         }
                     }
