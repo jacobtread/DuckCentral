@@ -8,9 +8,8 @@ import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.http.*
 import io.ktor.websocket.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import java.util.concurrent.Executors
 
 fun interface ResponseConsumer<R> {
@@ -87,6 +86,16 @@ object DuckController {
             }
         }
         return remember { terminalState }
+    }
+
+    suspend fun <R> waitFor(message: Message<R>): R = coroutineScope {
+        val channel = Channel<R>()
+        launch {
+            push(message) {
+                runBlocking { channel.send(it) }
+            }
+        }
+        return@coroutineScope channel.receive();
     }
 
     /**

@@ -186,7 +186,7 @@ open class SettingsMessage : Message<Settings> {
     private fun parseValue(value: String): String {
         val parts = value.split('=', limit = 2)
         if (parts.size < 2) throw InvalidResponse("Settings pair was invalid: $value")
-        return parts[0]
+        return parts[1]
     }
 }
 
