@@ -174,7 +174,7 @@ fun Pages(navController: NavHostController) {
                     composable(page.route) {
                         Surface {
                             Column(
-                                modifier = Modifier.fillMaxSize()
+                                modifier = Modifier
                                     .padding(15.dp)
                             ) {
                                 Title(page.name)

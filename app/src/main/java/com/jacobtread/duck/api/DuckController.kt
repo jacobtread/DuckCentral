@@ -3,6 +3,7 @@ package com.jacobtread.duck.api
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import com.jacobtread.duck.state.TerminalState
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.websocket.*
@@ -20,25 +21,6 @@ fun interface ResponseHandler<R> {
 typealias MessageQueue = ArrayDeque<QueueItem<*>>
 
 data class QueueItem<R>(val message: Message<R>, val handler: ResponseHandler<R>)
-
-class TerminalState {
-    var scrollState: LazyListState? = null
-    var scope: CoroutineScope? = null
-
-    val lines = mutableStateListOf<String>()
-
-    fun addHistory(line: String) {
-        line.split('\n')
-            .filter { it.isNotBlank() }
-            .toCollection(lines)
-        scope?.launch {
-            val state = scrollState;
-            if (state != null && !state.isScrollInProgress) {
-                state.animateScrollToItem(lines.size - 1)
-            }
-        }
-    }
-}
 
 object DuckController {
 
@@ -62,30 +44,9 @@ object DuckController {
     private val queue = MessageQueue()
 
     var stateConsumer: ResponseHandler<String>? = null
-    private var terminalState = TerminalState()
 
     // The time in milliseconds of the last status update
     private var lastStatusUpdate = -1L
-
-    fun history(value: String) {
-        if (value.isBlank()) return
-        terminalState.addHistory(value)
-        println(value)
-    }
-
-    @Composable
-    fun terminalState(scrollState: LazyListState): TerminalState {
-        val scope = rememberCoroutineScope()
-        DisposableEffect(LocalLifecycleOwner.current) {
-            terminalState.scrollState = scrollState
-            terminalState.scope = scope
-            onDispose {
-                terminalState.scrollState = null
-                terminalState.scope = null
-            }
-        }
-        return remember { terminalState }
-    }
 
     suspend fun <R> waitFor(message: Message<R>): R = coroutineScope {
         val channel = Channel<Result<R>>()

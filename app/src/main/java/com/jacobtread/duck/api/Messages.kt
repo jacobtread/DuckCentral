@@ -213,25 +213,6 @@ class ResetMessage : SettingsMessage() {
  */
 class SetSettingMessage(key: String, value: String) : SimpleMessage("set $key $value")
 
-/**
- * TerminalMessage Represents a message sent via the user
- * terminal.
- *
- * @constructor Create empty TerminalMessage
- */
-class TerminalMessage(private val value: String) : Message<String> {
-    override suspend fun send(session: WebSocketSession) {
-        session.writeText(value)
-        DuckController.history(value)
-    }
-
-    override suspend fun receive(session: WebSocketSession): String {
-        val text =  session.readText()
-        DuckController.history(text)
-        return text
-    }
-}
-
 const val TEMP_FILE_NAME = "/temporary_script"
 
 /**
