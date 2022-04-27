@@ -38,11 +38,11 @@ interface Message<R> {
  */
 open class SimpleMessage(private val message: String) : Message<String> {
     override suspend fun send(session: WebSocketSession) {
-        session.writeText(message, true)
+        session.writeText(message)
     }
 
     override suspend fun receive(session: WebSocketSession): String {
-        return session.readText(true)
+        return session.readText()
     }
 }
 
@@ -65,8 +65,7 @@ suspend fun <R> WebSocketSession.message(message: Message<R>): R {
  *
  * @param value The text value to write
  */
-suspend fun WebSocketSession.writeText(value: String, history: Boolean = true) {
-    if (history) DuckController.history(value)
+suspend fun WebSocketSession.writeText(value: String) {
     if (value.endsWith("\n")) {
         send(value)
     } else {
@@ -81,13 +80,12 @@ suspend fun WebSocketSession.writeText(value: String, history: Boolean = true) {
  * @throws InvalidResponse thrown if the frame wasn't a text frame
  * @return The text that was read
  */
-suspend fun WebSocketSession.readText(history: Boolean = true): String {
+suspend fun WebSocketSession.readText(): String {
     var iteration = 0
     while (iteration < 10) {
         val msg = incoming.receive();
         if (msg is Frame.Text) {
             val text = msg.readText()
-            if (history) DuckController.history(text)
             return text
         } else if (msg is Frame.Close) throw UnexpectedlyClosed(msg.readReason())
         iteration++
@@ -95,8 +93,8 @@ suspend fun WebSocketSession.readText(history: Boolean = true): String {
     throw RuntimeException("Failed to read response from socket. Too many invalid frames.")
 }
 
-suspend fun WebSocketSession.readTextSplit(limit: Int, history: Boolean = true): List<String> {
-    val text = readText(history);
+suspend fun WebSocketSession.readTextSplit(limit: Int): List<String> {
+    val text = readText();
     return text.split('\n', limit = limit)
         .filter { it.isNotBlank() }
         .map { line -> line.trimEnd { it == '\n' }}
@@ -111,27 +109,22 @@ suspend fun WebSocketSession.readTextSplit(limit: Int, history: Boolean = true):
  * @throws InvalidResponse thrown if one of the frames wasn't a text frame
  * @return The combined output of the entire read stream
  */
-suspend fun WebSocketSession.readStream(history: Boolean = true): String {
+suspend fun WebSocketSession.readStream(): String {
     val output = StringBuilder()
     var line: String
     while (true) {
-        writeText("read", history) // Request more data from the server
-        line = readText(history)
+        writeText("read") // Request more data from the server
+        line = readText()
         if (line == "> END") break
         output.append(line)
     }
-    writeText("close", history) // Tell the server to close the file stream
+    writeText("close") // Tell the server to close the file stream
     return output.toString()
 }
 
 // The maximum size of the chunks that can be streamed
 // to the server (1024 bytes per frame)
 const val CHUNK_SIZE = 1024
-
-suspend fun WebSocketSession.write(value: String) {
-    DuckController.history(value)
-    send(value)
-}
 
 /**
  * writeStream Writes the provided data value as
@@ -140,8 +133,8 @@ suspend fun WebSocketSession.write(value: String) {
  *
  * @param value The data to stream
  */
-suspend fun WebSocketSession.writeStream(to: String, value: String, history: Boolean = true) {
-    writeText("stream \"$to\"", history)
+suspend fun WebSocketSession.writeStream(to: String, value: String) {
+    writeText("stream \"$to\"")
     var cursor = 0
     var length: Int
     var slice: String
@@ -152,8 +145,8 @@ suspend fun WebSocketSession.writeStream(to: String, value: String, history: Boo
             value.length - cursor
         }
         slice = value.substring(cursor..length)
-        write(slice) // Newlines aren't appended to streams
+        send(slice) // Newlines aren't appended to streams
         cursor += length
     }
-    writeText("close", history)
+    writeText("close")
 }

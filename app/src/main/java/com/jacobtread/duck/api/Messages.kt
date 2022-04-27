@@ -105,11 +105,11 @@ class RamMessage : Message<Int> {
  */
 class StatusMessage : Message<String> {
     override suspend fun send(session: WebSocketSession) {
-        session.writeText("status", false)
+        session.writeText("status")
     }
 
     override suspend fun receive(session: WebSocketSession): String {
-        return session.readText(false)
+        return session.readText()
     }
 }
 
@@ -219,7 +219,18 @@ class SetSettingMessage(key: String, value: String) : SimpleMessage("set $key $v
  *
  * @constructor Create empty TerminalMessage
  */
-class TerminalMessage(value: String) : SimpleMessage(value)
+class TerminalMessage(private val value: String) : Message<String> {
+    override suspend fun send(session: WebSocketSession) {
+        session.writeText(value)
+        DuckController.history(value)
+    }
+
+    override suspend fun receive(session: WebSocketSession): String {
+        val text =  session.readText()
+        DuckController.history(text)
+        return text
+    }
+}
 
 const val TEMP_FILE_NAME = "/temporary_script"
 
