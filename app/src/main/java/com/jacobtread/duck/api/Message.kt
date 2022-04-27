@@ -11,7 +11,6 @@ import io.ktor.websocket.*
  * @constructor Create empty Message
  */
 interface Message<R> {
-
     /**
      * send Implementations will send the command to the
      * server as plain text packets
@@ -39,11 +38,11 @@ interface Message<R> {
  */
 open class SimpleMessage(private val message: String) : Message<String> {
     override suspend fun send(session: WebSocketSession) {
-        session.writeText(message)
+        session.writeText(message, true)
     }
 
     override suspend fun receive(session: WebSocketSession): String {
-        return session.readText()
+        return session.readText(true)
     }
 }
 
@@ -66,8 +65,8 @@ suspend fun <R> WebSocketSession.message(message: Message<R>): R {
  *
  * @param value The text value to write
  */
-suspend fun WebSocketSession.writeText(value: String) {
-    DuckController.history(value)
+suspend fun WebSocketSession.writeText(value: String, history: Boolean = true) {
+    if (history) DuckController.history(value)
     if (value.endsWith("\n")) {
         send(value)
     } else {
@@ -82,16 +81,15 @@ suspend fun WebSocketSession.writeText(value: String) {
  * @throws InvalidResponse thrown if the frame wasn't a text frame
  * @return The text that was read
  */
-suspend fun WebSocketSession.readText(): String {
+suspend fun WebSocketSession.readText(history: Boolean = true): String {
     var iteration = 0
     while (iteration < 10) {
         val msg = incoming.receive();
         if (msg is Frame.Text) {
             val text = msg.readText()
-            DuckController.history(text)
+            if (history) DuckController.history(text)
             return text
-        }
-        else if (msg is Frame.Close) throw UnexpectedlyClosed(msg.readReason())
+        } else if (msg is Frame.Close) throw UnexpectedlyClosed(msg.readReason())
         iteration++
     }
     throw RuntimeException("Failed to read response from socket. Too many invalid frames.")
@@ -105,16 +103,16 @@ suspend fun WebSocketSession.readText(): String {
  * @throws InvalidResponse thrown if one of the frames wasn't a text frame
  * @return The combined output of the entire read stream
  */
-suspend fun WebSocketSession.readStream(): String {
+suspend fun WebSocketSession.readStream(history: Boolean = true): String {
     val output = StringBuilder()
     var line: String
     while (true) {
-        writeText("read") // Request more data from the server
-        line = readText()
+        writeText("read", history) // Request more data from the server
+        line = readText(history)
         if (line == "> END") break
         output.append(line)
     }
-    writeText("close") // Tell the server to close the file stream
+    writeText("close", history) // Tell the server to close the file stream
     return output.toString()
 }
 
@@ -134,8 +132,8 @@ suspend fun WebSocketSession.write(value: String) {
  *
  * @param value The data to stream
  */
-suspend fun WebSocketSession.writeStream(to: String, value: String) {
-    writeText("stream \"$to\"")
+suspend fun WebSocketSession.writeStream(to: String, value: String, history: Boolean = true) {
+    writeText("stream \"$to\"", history)
     var cursor = 0
     var length: Int
     var slice: String
@@ -149,5 +147,5 @@ suspend fun WebSocketSession.writeStream(to: String, value: String) {
         write(slice) // Newlines aren't appended to streams
         cursor += length
     }
-    writeText("close")
+    writeText("close", history)
 }

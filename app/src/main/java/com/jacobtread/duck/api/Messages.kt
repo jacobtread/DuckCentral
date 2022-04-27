@@ -105,11 +105,11 @@ class RamMessage : Message<Int> {
  */
 class StatusMessage : Message<String> {
     override suspend fun send(session: WebSocketSession) {
-        session.writeText("status")
+        session.writeText("status", false)
     }
 
     override suspend fun receive(session: WebSocketSession): String {
-        return session.readText()
+        return session.readText(false)
     }
 }
 
