@@ -75,18 +75,22 @@ object TerminalPage : Page("terminal", Icons.Filled.Code, "Terminal") {
         val scope = rememberCoroutineScope();
         SideEffect {
             DuckController.terminalConsumer = object : TerminalConsumer {
+                fun update() {
+                    scope.launch {
+                        if (!scrollState.isScrollInProgress) {
+                            scrollState.animateScrollToItem(lines.size - 1)
+                        }
+                    }
+                }
+
                 override fun bulk(value: List<String>) {
                     lines.addAll(value)
-                    scope.launch {
-                        scrollState.scrollToItem(lines.size - 1)
-                    }
+                    update()
                 }
 
                 override fun consume(value: String) {
                     lines.add(value)
-                    scope.launch {
-                        scrollState.scrollToItem(lines.size - 1)
-                    }
+                    update()
                 }
             }
         }

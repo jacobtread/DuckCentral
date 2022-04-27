@@ -38,7 +38,8 @@ class MainActivity : ComponentActivity() {
             DuckCentralTheme {
                 Surface(
                     color = MaterialTheme.colors.background,
-                    modifier = Modifier.imePadding().navigationBarsPadding()
+                    modifier = Modifier.navigationBarsPadding()
+                        .systemBarsPadding()
                 ) {
                     App()
                 }
