@@ -17,47 +17,17 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.jacobtread.duck.api.DuckController
 import com.jacobtread.duck.api.TerminalMessage
+import com.jacobtread.duck.api.TerminalState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-
-class TerminalState(private val scrollState: LazyListState, private val scope: CoroutineScope) {
-    val lines = mutableStateListOf<String>()
-
-    private fun update() {
-        scope.launch {
-            if (!scrollState.isScrollInProgress) {
-                scrollState.animateScrollToItem(lines.size - 1)
-            }
-        }
-    }
-
-
-    fun bulk(value: List<String>) {
-        lines.addAll(value)
-        update()
-    }
-
-    fun line(value: String) {
-        lines.add(value)
-        update()
-    }
-}
 
 
 object TerminalPage : Page("terminal", Icons.Filled.Code, "Terminal") {
 
     @Composable
     override fun Root(navController: NavHostController, modifier: Modifier) {
-        val scope = rememberCoroutineScope();
         val scrollState = rememberLazyListState()
-        val terminalState = remember { TerminalState(scrollState, scope) }
-        DisposableEffect(LocalLifecycleOwner.current) {
-            DuckController.terminalState = terminalState;
-            onDispose {
-                DuckController.terminalState = null;
-            }
-        }
-
+        val terminalState = DuckController.terminalState(scrollState)
         Column(modifier) {
             Messages(
                 terminalState,

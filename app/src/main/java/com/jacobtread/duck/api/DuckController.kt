@@ -1,6 +1,8 @@
 package com.jacobtread.duck.api
 
-import com.jacobtread.duck.screens.TerminalState
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.websocket.*
@@ -10,7 +12,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
-import java.util.function.Consumer
 
 fun interface ResponseConsumer<R> {
     fun consume(value: R)
@@ -19,6 +20,25 @@ fun interface ResponseConsumer<R> {
 typealias MessageQueue = ArrayDeque<QueueItem<*>>
 
 data class QueueItem<R>(val message: Message<R>, val handler: ResponseConsumer<R>)
+
+class TerminalState {
+    var scrollState: LazyListState? = null
+    var scope: CoroutineScope? = null
+
+    val lines = mutableStateListOf<String>()
+
+    fun addHistory(line: String) {
+        lines.add(line)
+        scope?.launch {
+            val state = scrollState;
+            if (state != null && !state.isScrollInProgress) {
+                state.animateScrollToItem(lines.size - 1)
+            }
+        }
+    }
+
+}
+
 
 object DuckController {
 
@@ -42,21 +62,28 @@ object DuckController {
     private val queue = MessageQueue()
 
     var stateConsumer: ResponseConsumer<String>? = null
-    var terminalState: TerminalState? = null
-        set(value) {
-            value?.bulk(messageHistory)
-            field = value
-        }
+    private var terminalState = TerminalState()
 
     // The time in milliseconds of the last status update
     private var lastStatusUpdate = -1L
 
-    private var messageHistory = ArrayList<String>();
-
     fun history(value: String) {
-        messageHistory.add(value)
-        terminalState?.line(value)
+        terminalState.addHistory(value)
         println(value)
+    }
+
+    @Composable
+    fun terminalState(scrollState: LazyListState): TerminalState {
+        val scope = rememberCoroutineScope()
+        DisposableEffect(LocalLifecycleOwner.current) {
+            terminalState.scrollState = scrollState
+            terminalState.scope = scope
+            onDispose {
+                terminalState.scrollState = null
+                terminalState.scope = null
+            }
+        }
+        return remember { terminalState }
     }
 
     /**
