@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
@@ -27,7 +28,6 @@ import com.jacobtread.duck.pages.*
 import com.jacobtread.duck.socket.DuckController
 import com.jacobtread.duck.theme.DefaultSpacing
 import com.jacobtread.duck.theme.DuckCentralTheme
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
 
         val state = remember { BaseState() }
 
-        LaunchedEffect(key1=state.connect) {
+        LaunchedEffect(key1 = state.connect) {
             if (state.connect) {
                 try {
                     DuckController.connect()
@@ -91,7 +91,14 @@ class MainActivity : ComponentActivity() {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text("Failed to connect", fontSize = 28.sp, color = Color.White, fontWeight = FontWeight.Bold)
-                Text(state.failMessage, fontSize = 16.sp, color = Color.LightGray, softWrap = true, modifier = Modifier.padding(horizontal = 25.dp))
+                Text(
+                    state.failMessage,
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.Center,
+                    color = Color.LightGray,
+                    softWrap = true,
+                    modifier = Modifier.padding(horizontal = 25.dp),
+                )
                 Button(onClick = {
                     state.failed = false
                     state.connect = true
