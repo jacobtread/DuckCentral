@@ -9,12 +9,9 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
-import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -24,9 +21,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.jacobtread.duck.components.Loader
+import com.jacobtread.duck.components.RetryLayout
+import com.jacobtread.duck.flow.RetryFlow
 import com.jacobtread.duck.pages.*
 import com.jacobtread.duck.socket.DuckController
-import com.jacobtread.duck.theme.DefaultSpacing
 import com.jacobtread.duck.theme.DuckCentralTheme
 
 class MainActivity : ComponentActivity() {
@@ -47,65 +45,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    class BaseState {
-        var connect by mutableStateOf(true)
-        var failed by mutableStateOf(false)
-        var failMessage by mutableStateOf("")
-    }
-
 
     @Composable
     fun App() {
-
-        val state = remember { BaseState() }
-
-        LaunchedEffect(key1 = state.connect) {
-            if (state.connect) {
-                try {
-                    DuckController.connect()
-                } catch (e: Throwable) {
-                    state.failed = true
-                    state.failMessage = e.message ?: "Unknown cause"
-                }
-                state.connect = false
-            }
-        }
-
-        if (DuckController.connected) {
-            Pages()
-        } else if (state.failed) {
-            FailedConnection(state)
-        } else {
-            Loader("Connecting", "Connecting to websocket...")
-        }
-    }
-
-    @Composable
-    fun FailedConnection(state: BaseState) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxSize()
+        RetryFlow(
+            load = { DuckController.connect() },
+            errorTitle = "Failed to connect",
+            loadingTitle = "Connecting",
+            loadingMessage = "Connecting to websocket...",
         ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(DefaultSpacing),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text("Failed to connect", fontSize = 28.sp, color = Color.White, fontWeight = FontWeight.Bold)
-                Text(
-                    state.failMessage,
-                    fontSize = 16.sp,
-                    textAlign = TextAlign.Center,
-                    color = Color.LightGray,
-                    softWrap = true,
-                    modifier = Modifier.padding(horizontal = 25.dp),
-                )
-                Button(onClick = {
-                    state.failed = false
-                    state.connect = true
-                }) {
-                    Text("Retry")
-                }
-            }
+            Pages()
         }
     }
 
@@ -129,7 +78,7 @@ class MainActivity : ComponentActivity() {
                         Column(
                             modifier = Modifier
                                 .padding(15.dp)
-                        )  {
+                        ) {
                             Text(
                                 page.name,
                                 fontSize = 5.em,
