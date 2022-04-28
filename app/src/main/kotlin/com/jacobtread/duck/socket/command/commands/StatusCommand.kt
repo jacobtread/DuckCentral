@@ -1,8 +1,8 @@
 package com.jacobtread.duck.socket.command.commands
 
-import com.jacobtread.duck.socket.command
+import com.jacobtread.duck.socket.command.command
 import com.jacobtread.duck.socket.command.Command
-import com.jacobtread.duck.socket.text
+import com.jacobtread.duck.socket.command.text
 import com.jacobtread.duck.state.ConnectedStatus
 import com.jacobtread.duck.state.ErrorStatus
 import com.jacobtread.duck.state.RunningStatus

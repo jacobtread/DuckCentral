@@ -1,6 +1,20 @@
-package com.jacobtread.duck.socket
+package com.jacobtread.duck.socket.command
 
+import com.jacobtread.duck.socket.InvalidResponseException
 import io.ktor.websocket.*
+
+/**
+ * command Sends the provided command and receives the
+ * response value back returning it
+ *
+ * @param R The response type
+ * @param command The command to send
+ * @return The response
+ */
+suspend fun <R> WebSocketSession.command(command: Command<R>): R {
+    command.send(this)
+    return command.receive(this)
+}
 
 /**
  * command Sends a command to the websocket server. Commands

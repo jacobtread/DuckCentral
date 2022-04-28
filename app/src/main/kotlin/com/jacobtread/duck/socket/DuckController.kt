@@ -1,6 +1,7 @@
 package com.jacobtread.duck.socket
 
 import com.jacobtread.duck.socket.command.Command
+import com.jacobtread.duck.socket.command.command
 import com.jacobtread.duck.state.Status
 import com.jacobtread.duck.state.WaitingStatus
 import io.ktor.client.*
@@ -84,10 +85,7 @@ class DuckController {
     @Throws(InvalidResponseException::class, NotConnectedException::class)
     suspend fun <R> send(command: Command<R>): R {
         val session = this.session ?: throw NotConnectedException()
-        return withContext(Dispatchers.IO) {
-            command.send(session)
-            command.receive(session)
-        }
+        return withContext(Dispatchers.IO) { session.command(command) }
     }
 
 }
