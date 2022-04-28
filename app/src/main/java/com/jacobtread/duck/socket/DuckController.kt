@@ -1,5 +1,8 @@
 package com.jacobtread.duck.socket
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.jacobtread.duck.socket.command.Command
 import com.jacobtread.duck.socket.command.command
 import com.jacobtread.duck.state.Status
@@ -12,18 +15,17 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class DuckController {
+object DuckController {
 
-    companion object {
-        // Default host of websocket server
-        private const val DEFAULT_HOST = "192.168.4.1"
+    // Default host of websocket server
+    private const val DEFAULT_HOST = "192.168.4.1"
 
-        // Default port of websocket server
-        private const val DEFAULT_PORT = 80
+    // Default port of websocket server
+    private const val DEFAULT_PORT = 80
 
-        // The path of the web server the websocket is at
-        private const val DEFAULT_PATH = "/ws"
-    }
+    // The path of the web server the websocket is at
+    private const val DEFAULT_PATH = "/ws"
+
 
     // The network client used to make calls
     private val client = HttpClient(CIO) { install(WebSockets) }
@@ -32,12 +34,12 @@ class DuckController {
     private var session: DefaultWebSocketSession? = null
 
     // Whether we are connected
-    private var connected = false
+    var connected by mutableStateOf(false)
 
     // The thread for updating status
     private val statusThread = StatusThread(this)
 
-    var lastStatus: Status = WaitingStatus()
+    var lastStatus: Status by mutableStateOf(WaitingStatus())
 
     /**
      * connect Connects to a websocket connection disconnecting

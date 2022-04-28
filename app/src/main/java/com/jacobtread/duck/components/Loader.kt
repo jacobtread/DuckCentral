@@ -32,7 +32,7 @@ fun Loader(title: String, content: String) {
         ) {
             CircularProgressIndicator()
             Text(title, fontSize = 18.sp, color = Color.White)
-            Text(content)
+            Text(content,fontSize = 16.sp, color = Color.LightGray)
         }
     }
 }
