@@ -126,13 +126,18 @@ class MainActivity : ComponentActivity() {
             ) {
                 pages.forEach { page ->
                     composable(page.route) {
-                        Text(
-                            page.name,
-                            fontSize = 5.em,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(5.dp)
-                        )
-                        page.Content()
+                        Column(
+                            modifier = Modifier
+                                .padding(15.dp)
+                        )  {
+                            Text(
+                                page.name,
+                                fontSize = 5.em,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            page.Content()
+                        }
+
                     }
                 }
             }
