@@ -1,6 +1,7 @@
 package com.jacobtread.duck.socket
 
 import com.jacobtread.duck.socket.command.commands.StatusCommand
+import com.jacobtread.duck.state.ErrorStatus
 import kotlinx.coroutines.runBlocking
 
 class StatusThread(private val duckController: DuckController) : Thread("Status Update Thread") {
@@ -23,11 +24,15 @@ class StatusThread(private val duckController: DuckController) : Thread("Status 
     override fun run() {
         while (true) {
             try {
-                runBlocking {
-                    try {
-                        val status = duckController.send(StatusCommand())
-                        duckController.lastStatus = status
-                    } catch (_: Exception) {
+                if (duckController.connected.complete) {
+                    runBlocking {
+                        try {
+                            val status = duckController.send(StatusCommand())
+                            duckController.lastStatus = status
+                        } catch (e: Exception) {
+                            duckController.disconnect()
+                            duckController.lastStatus = ErrorStatus()
+                        }
                     }
                 }
                 sleep(STATUS_UPDATE_INTERVAL)

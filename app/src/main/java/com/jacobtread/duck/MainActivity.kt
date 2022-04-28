@@ -53,6 +53,8 @@ class MainActivity : ComponentActivity() {
             errorTitle = "Failed to connect",
             loadingTitle = "Connecting",
             loadingMessage = "Connecting to websocket...",
+            state = DuckController.connected,
+            manualComplete = true,
         ) {
             Pages()
         }

@@ -5,7 +5,8 @@ import com.jacobtread.duck.components.Loader
 import com.jacobtread.duck.components.RetryLayout
 
 class RetryState {
-    var waiting by mutableStateOf(true)
+    var execute by mutableStateOf(true)
+    var complete by mutableStateOf(false)
     var failed by mutableStateOf(false)
     var failedMessage by mutableStateOf("")
 }
@@ -16,30 +17,30 @@ fun RetryFlow(
     errorTitle: String,
     loadingTitle: String,
     loadingMessage: String,
+    state: RetryState = RetryState(),
+    manualComplete: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    val state = remember { RetryState() }
-
-    LaunchedEffect(state.waiting) {
-        if (state.waiting) {
+    LaunchedEffect(state.execute) {
+        if (state.execute) {
             try {
-               load()
+                load()
             } catch (e: Throwable) {
                 state.failed = true
                 state.failedMessage = e.message ?: e.javaClass.simpleName
             }
-            state.waiting = false
+            if (!manualComplete) state.complete = true
+            state.execute = false
         }
     }
-
-    if (state.failed) {
+    if (state.complete) {
+        content()
+    } else if (state.failed || !state.execute) {
         RetryLayout(errorTitle, state.failedMessage) {
             state.failed = false
-            state.waiting = true
+            state.execute = true
         }
-    } else if (state.waiting) {
-        Loader(loadingTitle, loadingMessage)
     } else {
-        content()
+        Loader(loadingTitle, loadingMessage)
     }
 }

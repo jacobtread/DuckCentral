@@ -3,6 +3,7 @@ package com.jacobtread.duck.socket
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.jacobtread.duck.flow.RetryState
 import com.jacobtread.duck.socket.command.Command
 import com.jacobtread.duck.socket.command.command
 import com.jacobtread.duck.state.Status
@@ -34,7 +35,7 @@ object DuckController {
     private var session: DefaultWebSocketSession? = null
 
     // Whether we are connected
-    var connected by mutableStateOf(false)
+    var connected = RetryState()
 
     // The thread for updating status
     private val statusThread = StatusThread(this)
@@ -56,11 +57,11 @@ object DuckController {
         path: String = DEFAULT_PATH,
     ) {
         // Disconnect if we are already connected
-        if (connected) disconnect()
+        if (connected.complete) disconnect()
         withContext(Dispatchers.IO) {
             // Create a new session
             session = client.webSocketSession(HttpMethod.Get, host, port, path)
-            connected = true
+            connected.complete = true
             statusThread.start()
         }
     }
@@ -73,6 +74,7 @@ object DuckController {
         withContext(Dispatchers.IO) {
             session?.close(CloseReason(CloseReason.Codes.NORMAL, "Disconnecting"))
             session = null
+            connected.complete = false
         }
     }
 
