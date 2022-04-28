@@ -1,6 +1,7 @@
-package com.jacobtread.duck.socket.command
+package com.jacobtread.duck.socket.command.commands
 
 import com.jacobtread.duck.socket.command
+import com.jacobtread.duck.socket.command.Command
 import com.jacobtread.duck.socket.text
 import io.ktor.websocket.*
 

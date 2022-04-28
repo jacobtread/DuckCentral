@@ -13,6 +13,11 @@ val SecondaryDark = Color(0xFF007c91)
 
 val TextOn = Color(0xFFffffff)
 
-val SentColor = Color(0xFF3c3d3c)
-val ReceivedColor = Color(0xFF878787)
-val ErrorColor = Color(0xFFb52f33)
+val TerminalSentColor = Color(0xFF3c3d3c)
+val TerminalReceivedColor = Color(0xFF878787)
+val TerminalErrorColor = Color(0xFFb52f33)
+
+val ConnectedColor = Color(0xFF51C158)
+val RunningColor = Color(0xFF2EF431)
+val ErrorColor = Color(0xFFF42E42)
+val WaitingColor = Color(0xFFF4D32E)

@@ -1,6 +1,8 @@
 package com.jacobtread.duck.socket
 
 import com.jacobtread.duck.socket.command.Command
+import com.jacobtread.duck.state.Status
+import com.jacobtread.duck.state.WaitingStatus
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.websocket.*
@@ -33,6 +35,8 @@ class DuckController {
 
     // The thread for updating status
     private val statusThread = StatusThread(this)
+
+    var lastStatus: Status = WaitingStatus()
 
     /**
      * connect Connects to a websocket connection disconnecting
