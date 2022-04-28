@@ -16,5 +16,5 @@ open class SimpleCommand(private val message: String) : Command<String> {
     override suspend fun receive(session: WebSocketSession): String = session.text()
 }
 
-class VersionMessage : SimpleCommand("version")
-class FormatMessage : SimpleCommand("format")
+class VersionCommand : SimpleCommand("version")
+class FormatCommand : SimpleCommand("format")

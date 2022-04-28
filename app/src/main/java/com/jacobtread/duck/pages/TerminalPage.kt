@@ -11,4 +11,9 @@ object TerminalPage : Page("Terminal", "terminal", Icons.Filled.Terminal) {
     override fun Content() {
         Text("Terminal Page")
     }
+
+    @Composable
+    fun Messages() {
+
+    }
 }
