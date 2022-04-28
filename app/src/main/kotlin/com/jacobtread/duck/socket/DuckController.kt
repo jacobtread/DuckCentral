@@ -1,5 +1,6 @@
 package com.jacobtread.duck.socket
 
+import com.jacobtread.duck.socket.command.Command
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.websocket.*
@@ -65,6 +66,23 @@ class DuckController {
         withContext(Dispatchers.IO) {
             session?.close(CloseReason(CloseReason.Codes.NORMAL, "Disconnecting"))
             session = null
+        }
+    }
+
+    /**
+     * send Sends the provided command and waits for a
+     * response from the websocket then returns that response
+     *
+     * @param R The type of the response
+     * @param command The command to send
+     * @return The response for the message
+     */
+    @Throws(InvalidResponseException::class, NotConnectedException::class)
+    suspend fun <R> send(command: Command<R>): R {
+        val session = this.session ?: throw NotConnectedException()
+        return withContext(Dispatchers.IO) {
+            command.send(session)
+            command.receive(session)
         }
     }
 

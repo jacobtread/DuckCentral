@@ -20,10 +20,10 @@ suspend fun WebSocketSession.command(value: String) {
  *
  * @return The resulting text that was read
  */
-@Throws(InvalidResponse::class)
+@Throws(InvalidResponseException::class)
 suspend fun WebSocketSession.text(): String {
     val frame: Frame = incoming.receive()
-    if (frame !is Frame.Text) throw InvalidResponse("Expected text frame but got ${frame.frameType} instead")
+    if (frame !is Frame.Text) throw InvalidResponseException("Expected text frame but got ${frame.frameType} instead")
     return frame.readText()
 }
 

@@ -2,5 +2,5 @@ package com.jacobtread.duck.socket
 
 import io.ktor.websocket.*
 
-class InvalidResponse(message: String) : RuntimeException(message)
-class UnexpectedlyClosed(reason: CloseReason?) : RuntimeException("Socket unexpected closed: ${reason?.message ?: "Unknown reason"} (${reason?.code ?: "Unknown code"})")
+class InvalidResponseException(message: String) : RuntimeException(message)
+class NotConnectedException() : RuntimeException("There is no active websocket connection")

@@ -1,15 +1,15 @@
-package com.jacobtread.duck.socket.message
+package com.jacobtread.duck.socket.command
 
 import io.ktor.websocket.*
 
 /**
- * Message Represents a message that can be sent through a websocket
+ * Command Represents a message that can be sent through a websocket
  * connection and receive a response after sending
  *
  * @param R The type of response to expect back
  * @constructor Create empty Message
  */
-interface Message<R> {
+interface Command<R> {
 
     /**
      * send Writes the contents of this message to
