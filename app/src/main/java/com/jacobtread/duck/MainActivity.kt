@@ -122,7 +122,7 @@ class MainActivity : ComponentActivity() {
                 navController,
                 startDestination = pages[0].route,
                 modifier = Modifier.fillMaxSize()
-                    .padding(15.dp)
+                    .padding(it)
             ) {
                 pages.forEach { page ->
                     composable(page.route) {
