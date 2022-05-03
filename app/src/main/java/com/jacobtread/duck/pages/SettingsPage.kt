@@ -4,8 +4,8 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.*
-import com.jacobtread.duck.components.Loader
-import com.jacobtread.duck.components.RetryLayout
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavHostController
 import com.jacobtread.duck.flow.RetryFlow
 import com.jacobtread.duck.socket.DuckController
 import com.jacobtread.duck.socket.command.commands.FileResponse
@@ -36,7 +36,7 @@ object SettingsPage : Page("Settings", "settings", Icons.Filled.Settings) {
     }
 
     @Composable
-    override fun Content() {
+    override fun Content(navController: NavHostController, stackEntry: NavBackStackEntry) {
         val state = remember { SettingsState() }
         RetryFlow(
             load = {

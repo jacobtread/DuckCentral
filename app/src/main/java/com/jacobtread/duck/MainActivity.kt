@@ -6,7 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -16,12 +17,12 @@ import androidx.core.view.WindowCompat
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.jacobtread.duck.components.Loader
-import com.jacobtread.duck.components.RetryLayout
+import androidx.navigation.navArgument
 import com.jacobtread.duck.flow.RetryFlow
 import com.jacobtread.duck.pages.*
 import com.jacobtread.duck.socket.DuckController
@@ -76,7 +77,7 @@ class MainActivity : ComponentActivity() {
                     .padding(it)
             ) {
                 pages.forEach { page ->
-                    composable(page.route) {
+                    composable(page.route) { backStackEntry ->
                         Column(
                             modifier = Modifier
                                 .padding(15.dp)
@@ -86,10 +87,16 @@ class MainActivity : ComponentActivity() {
                                 fontSize = 5.em,
                                 fontWeight = FontWeight.Bold,
                             )
-                            page.Content()
+                            page.Content(navController, backStackEntry)
                         }
 
                     }
+                }
+                composable(
+                    FilePage.route,
+                    arguments = listOf(navArgument("fileName") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    FilePage.Content(navController, backStackEntry)
                 }
             }
         }

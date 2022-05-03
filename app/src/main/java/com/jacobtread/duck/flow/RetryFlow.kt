@@ -12,12 +12,17 @@ class RetryState {
 }
 
 @Composable
+fun rememberRetryFlowState(): RetryState {
+    return remember { RetryState() }
+}
+
+@Composable
 fun RetryFlow(
     load: suspend () -> Unit,
     errorTitle: String,
     loadingTitle: String,
     loadingMessage: String,
-    state: RetryState = RetryState(),
+    state: RetryState = rememberRetryFlowState(),
     manualComplete: Boolean = false,
     content: @Composable () -> Unit,
 ) {

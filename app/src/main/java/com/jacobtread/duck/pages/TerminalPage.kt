@@ -1,6 +1,5 @@
 package com.jacobtread.duck.pages
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -11,12 +10,13 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavHostController
 import com.jacobtread.duck.socket.DuckController
 import com.jacobtread.duck.socket.command.commands.SimpleCommand
 import com.jacobtread.duck.theme.TerminalErrorColor
@@ -35,7 +35,7 @@ object TerminalPage : Page("Terminal", "terminal", Icons.Filled.Terminal) {
     data class TerminalLine(val type: LineType, val content: String)
 
     @Composable
-    override fun Content() {
+    override fun Content(navController: NavHostController, stackEntry: NavBackStackEntry) {
         val lines = remember { mutableStateListOf<TerminalLine>() }
         val scrollState = rememberLazyListState()
         Column {
