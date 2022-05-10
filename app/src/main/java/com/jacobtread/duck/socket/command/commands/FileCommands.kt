@@ -60,7 +60,10 @@ class WriteFileCommand(name: String, private val content: String) : Command<Unit
 class ReadFileCommand(name: String) : Command<String> {
     private val name: String = cleanFileName(name)
     override suspend fun send(session: WebSocketSession) = session.command("stream \"$name\"")
-    override suspend fun receive(session: WebSocketSession): String = session.stream()
+    override suspend fun receive(session: WebSocketSession): String {
+        session.text()
+        return session.stream()
+    }
 }
 
 /**

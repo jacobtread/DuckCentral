@@ -42,6 +42,8 @@ object DuckController {
 
     var lastStatus: Status by mutableStateOf(WaitingStatus())
 
+    // TODO: give this system its own thread and replace with send queue design
+
     /**
      * connect Connects to a websocket connection disconnecting
      * the connection if there is already one. Also starts the
@@ -89,7 +91,9 @@ object DuckController {
     @Throws(InvalidResponseException::class, NotConnectedException::class)
     suspend fun <R> send(command: Command<R>): R {
         val session = this.session ?: throw NotConnectedException()
-        return withContext(Dispatchers.IO) { session.command(command) }
+        return withContext(Dispatchers.IO) {
+            session.command(command)
+        }
     }
 
 }

@@ -23,7 +23,8 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import com.jacobtread.duck.flow.RetryFlow
-import com.jacobtread.duck.socket.DuckController
+import com.jacobtread.duck.flow.rememberRetryFlowState
+import com.jacobtread.duck.socket.DuckSocket
 import com.jacobtread.duck.socket.command.commands.FileResponse
 import com.jacobtread.duck.socket.command.commands.FilesCommand
 
@@ -32,15 +33,17 @@ object FilesPage : Page("Files", "files", Icons.Filled.Folder) {
     @Composable
     override fun Content(navController: NavHostController, stackEntry: NavBackStackEntry) {
         val files = remember { mutableListOf<FileResponse>() }
+        val flowState = rememberRetryFlowState()
         val scrollState = rememberLazyListState()
         RetryFlow(
             load = {
-                val loadedFiles = DuckController.send(FilesCommand())
+                val loadedFiles = DuckSocket.send(FilesCommand())
                 files.addAll(loadedFiles)
             },
             errorTitle = "Failed to load",
             loadingTitle = "Loading Files",
-            loadingMessage = "Retrieving files from websocket"
+            loadingMessage = "Retrieving files from websocket",
+            state = flowState
         ) {
             Column {
                 IconButton(

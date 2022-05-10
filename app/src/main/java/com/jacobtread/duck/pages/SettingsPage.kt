@@ -7,7 +7,7 @@ import androidx.compose.runtime.*
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import com.jacobtread.duck.flow.RetryFlow
-import com.jacobtread.duck.socket.DuckController
+import com.jacobtread.duck.socket.DuckSocket
 import com.jacobtread.duck.socket.command.commands.FileResponse
 import com.jacobtread.duck.socket.command.commands.FilesCommand
 import com.jacobtread.duck.socket.command.commands.SettingsCommand
@@ -40,8 +40,8 @@ object SettingsPage : Page("Settings", "settings", Icons.Filled.Settings) {
         val state = remember { SettingsState() }
         RetryFlow(
             load = {
-                val settings = DuckController.send(SettingsCommand())
-                val files = DuckController.send(FilesCommand())
+                val settings = DuckSocket.send(SettingsCommand())
+                val files = DuckSocket.send(FilesCommand())
                 state.load(settings, files)
             },
             errorTitle = "Failed to load",

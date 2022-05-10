@@ -17,7 +17,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
-import com.jacobtread.duck.socket.DuckController
+import com.jacobtread.duck.socket.DuckSocket
 import com.jacobtread.duck.socket.command.commands.SimpleCommand
 import com.jacobtread.duck.theme.TerminalErrorColor
 import com.jacobtread.duck.theme.TerminalReceivedColor
@@ -101,7 +101,7 @@ object TerminalPage : Page("Terminal", "terminal", Icons.Filled.Terminal) {
                                 lines.add(LineType.Sent, message)
                                 scope.launch {
                                     try {
-                                        val result = DuckController.send(SimpleCommand(message))
+                                        val result = DuckSocket.send(SimpleCommand(message))
                                         lines.add(LineType.Received, result)
                                         message = ""
                                         sending = false

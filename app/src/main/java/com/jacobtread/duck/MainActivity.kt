@@ -25,7 +25,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.jacobtread.duck.flow.RetryFlow
 import com.jacobtread.duck.pages.*
-import com.jacobtread.duck.socket.DuckController
+import com.jacobtread.duck.socket.DuckSocket
 import com.jacobtread.duck.theme.DuckCentralTheme
 
 class MainActivity : ComponentActivity() {
@@ -50,11 +50,11 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun App() {
         RetryFlow(
-            load = { DuckController.connect() },
+            load = { DuckSocket.connect() },
             errorTitle = "Failed to connect",
             loadingTitle = "Connecting",
             loadingMessage = "Connecting to websocket...",
-            state = DuckController.connected,
+            state = DuckSocket.connected,
             manualComplete = true,
         ) {
             Pages()
@@ -104,7 +104,7 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun StatusBar() {
-        val state = DuckController.lastStatus
+        val state = DuckSocket.lastStatus
         Row(
             modifier = Modifier.fillMaxWidth()
                 .background(state.color())

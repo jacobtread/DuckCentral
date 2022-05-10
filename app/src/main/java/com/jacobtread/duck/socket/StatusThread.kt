@@ -32,11 +32,13 @@ class StatusThread(private val duckController: DuckController) : Thread("Status 
                         } catch (e: Exception) {
                             duckController.disconnect()
                             duckController.lastStatus = ErrorStatus()
+                            e.printStackTrace()
                         }
                     }
                 }
                 sleep(STATUS_UPDATE_INTERVAL)
-            } catch (_: InterruptedException) {
+            } catch (e: InterruptedException) {
+                e.printStackTrace()
                 break // Break out of the loop when interrupted
             }
         }
